@@ -1,0 +1,25 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "pharma-x-mobile",
+          "appId": "1:699345967742:android:22da26ac095a95fbefd62f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "pharma-x-mobile",
+          "configurations": {
+            "android": "1:699345967742:android:22da26ac095a95fbefd62f",
+            "ios": "1:699345967742:ios:b62eb6b06766e417efd62f",
+            "macos": "1:699345967742:ios:b62eb6b06766e417efd62f",
+            "web": "1:699345967742:web:b837f959f76de64eefd62f",
+            "windows": "1:699345967742:web:7feb7a41ac5859e5efd62f"
+          }
+        }
+      }
+    }
+  }
+}

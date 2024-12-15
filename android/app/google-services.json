@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "699345967742",
+    "project_id": "pharma-x-mobile",
+    "storage_bucket": "pharma-x-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:699345967742:android:22da26ac095a95fbefd62f",
+        "android_client_info": {
+          "package_name": "com.pharmax.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA911rM9IsE8zkIN-p3DozD40VCxRJ52_k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

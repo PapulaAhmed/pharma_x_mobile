@@ -1,0 +1,35 @@
+name: pharma_x
+description: A new Flutter project.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  smooth_page_indicator: ^1.2.0+3
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.8.1
+  cloud_firestore: ^5.5.1
+  provider: ^6.1.2
+  firebase_auth: ^5.0.2
+  google_sign_in: ^5.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/undraw_delivery_truck_vt6p.png
+    - assets/images/undraw_Chatting_re_j55r.png
+    - assets/images/undraw_Publish_post_re_wmql.png
+    - assets/images/11475206.jpg
+    - assets/images/google_logo.png
