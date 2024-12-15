@@ -1,6 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pharma_x/view/favourite_screen.dart';
 import 'package:pharma_x/view/order_screen.dart';
+import 'package:pharma_x/view/profile_screen.dart';
 import 'package:pharma_x/widgets/custom_appbar.dart';
+import 'package:pharma_x/widgets/medicine_display.dart';
 import 'package:provider/provider.dart';
 import 'package:pharma_x/viewmodel/auth_viewmodel.dart';
 
@@ -16,9 +21,9 @@ class _HomeState extends State<Home> {
 
   static final List<Widget> _pages = [
     HomeScreen(),
+    const FavouriteScreen(),
     const OrderScreen(),
-    const OrderScreen(),
-    const OrderScreen(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -27,84 +32,113 @@ class _HomeState extends State<Home> {
     });
   }
 
+  Future<Map<String, String>> _getUserDetails() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return {'email': 'Guest', 'name': 'Guest User'};
+
+    final email = user.email ?? 'No Email';
+    final uid = user.uid;
+
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (doc.exists) {
+      final data = doc.data();
+      final name =
+          "${data?['firstName'] ?? 'Guest'} ${data?['lastName'] ?? ''}".trim();
+      return {'email': email, 'name': name};
+    }
+
+    return {'email': email, 'name': 'Guest User'};
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       drawer: Drawer(
         child: SafeArea(
           child: Consumer<AuthViewModel>(
             builder: (context, authViewModel, child) {
-              return ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  DrawerHeader(
-                    decoration: const BoxDecoration(
-                      color: Colors.blue,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundImage:
-                              AssetImage('assets/images/11475206.jpg'),
+              return FutureBuilder<Map<String, String>>(
+                future: _getUserDetails(),
+                builder: (context, snapshot) {
+                  final userDetails = snapshot.data ??
+                      {'email': 'Loading...', 'name': 'Loading...'};
+
+                  return ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      DrawerHeader(
+                        decoration: const BoxDecoration(
+                          color: Colors.blue,
                         ),
-                        SizedBox(height: 10),
-                        Text(
-                          'Papula',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const CircleAvatar(
+                              radius: 40,
+                              backgroundImage:
+                                  AssetImage('assets/images/11475206.jpg'),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              userDetails['name']!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                              ),
+                            ),
+                            Text(
+                              userDetails['email']!,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          'papula@example.com',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.home_outlined),
-                    title: const Text('Home'),
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.person_outline),
-                    title: const Text('My Account'),
-                    onTap: () {
-                      // Navigate to My Account screen
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.shopping_bag_outlined),
-                    title: const Text('Orders'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const OrderScreen()),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.logout),
-                    title: const Text('Logout'),
-                    onTap: () async {
-                      await authViewModel.logOut();
-                      // After logging out, navigate back to the login screen.
-                      Navigator.pop(context, '/login');
-                    },
-                  ),
-                ],
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.home_outlined),
+                        title: const Text('Home'),
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: const Text('My Account'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          // Navigate to My Account screen
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.shopping_bag_outlined),
+                        title: const Text('Orders'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const OrderScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.logout),
+                        title: const Text('Logout'),
+                        onTap: () async {
+                          await authViewModel.logOut();
+                          Future.microtask(() {
+                            Navigator.pushReplacementNamed(context, '/login');
+                          });
+                        },
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -309,7 +343,7 @@ class HomeScreen extends StatelessWidget {
               ),
 
               // Medicines Display
-              // const MedicinesDisplay(),
+              const MedicinesDisplay(),
             ],
           ),
         ),

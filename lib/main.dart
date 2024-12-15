@@ -3,6 +3,7 @@ import 'package:pharma_x/view/home_screen.dart';
 import 'package:pharma_x/view/login_screen.dart';
 import 'package:pharma_x/view/sign_up_screen.dart';
 import 'package:pharma_x/viewmodel/auth_viewmodel.dart';
+import 'package:pharma_x/viewmodel/cart_viewmodel.dart';
 import 'package:pharma_x/viewmodel/signup_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => SignupViewModel()),
+        ChangeNotifierProvider(create: (_) => CartViewModel())
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
