@@ -22,7 +22,7 @@ class _HomeState extends State<Home> {
   static final List<Widget> _pages = [
     HomeScreen(),
     const FavouriteScreen(),
-    const OrderScreen(),
+    const OrdersScreen(),
     const ProfileScreen(),
   ];
 
@@ -121,7 +121,7 @@ class _HomeState extends State<Home> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => const OrderScreen()),
+                                builder: (context) => const OrdersScreen()),
                           );
                         },
                       ),
@@ -237,7 +237,7 @@ class HomeScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const OrderScreen(),
+                                builder: (context) => const OrdersScreen(),
                               ),
                             );
                           },

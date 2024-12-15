@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pharma_x/view/cart_screen.dart';
+import 'package:pharma_x/viewmodel/cart_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppbar({super.key});
+
+  Future<String> getUserFirstName() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return 'Guest';
+
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (doc.exists) {
+      return doc.data()?['firstName'] ?? 'Guest';
+    }
+    return 'Guest';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +31,7 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
           return InkWell(
             borderRadius: BorderRadius.circular(50),
             onTap: () {
+              // Open the drawer when the profile picture is tapped
               Scaffold.of(context).openDrawer();
             },
             child: Padding(
@@ -35,33 +52,40 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
           );
         },
       ),
-      title: const SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Hello, Papula',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+      title: FutureBuilder<String>(
+        future: getUserFirstName(),
+        builder: (context, snapshot) {
+          final firstName = snapshot.data ?? 'Guest';
+          return SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hello, $firstName',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  'What are you looking for?',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              'What are you looking for?',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 16.0),
           child: Row(
             children: [
+              // Notification Icon
               Stack(
                 children: [
                   Container(
@@ -95,6 +119,7 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
               const SizedBox(width: 10),
+              // Cart Icon
               Stack(
                 children: [
                   Container(
@@ -123,12 +148,26 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ),
                   ),
-                  const Positioned(
+                  Positioned(
                     right: 6,
                     top: 6,
-                    child: CircleAvatar(
-                      radius: 6,
-                      backgroundColor: Colors.red,
+                    child: Consumer<CartViewModel>(
+                      builder: (context, cart, child) {
+                        return cart.itemCount > 0
+                            ? CircleAvatar(
+                                radius: 8,
+                                backgroundColor: Colors.red,
+                                child: Text(
+                                  '${cart.itemCount}',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink();
+                      },
                     ),
                   ),
                 ],
