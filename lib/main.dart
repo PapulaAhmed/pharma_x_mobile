@@ -48,7 +48,7 @@ class AuthWrapper extends StatelessWidget {
 
     // If user is logged in (non-null), show home screen, else show login screen
     if (user != null) {
-      return const HomeScreen();
+      return Home();
     } else {
       return const LoginScreen();
     }
