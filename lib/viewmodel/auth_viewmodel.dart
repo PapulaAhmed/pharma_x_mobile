@@ -1,32 +1,51 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   User? _user;
   String? _errorMessage;
   bool _isLoading = false;
+  String? _userRole; // Stores the role (customer/pharmacist)
 
   User? get user => _user;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
+  String? get userRole => _userRole;
 
   AuthViewModel() {
-    _auth.authStateChanges().listen((User? user) {
+    _auth.authStateChanges().listen((User? user) async {
       _user = user;
+      if (_user != null) {
+        // Fetch user role from Firestore
+        await _fetchUserRole(_user!.uid);
+      }
       notifyListeners();
     });
   }
 
-  Future<void> signUp(String email, String password) async {
+  Future<void> signUp(String email, String password, String role) async {
     _setLoadingState(true);
     try {
       _clearErrorMessage();
-      await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Save user role in Firestore
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'role': role,
+        'name': userCredential.user!.email, // Default to email
+        'email': email,
+      });
+
+      await _fetchUserRole(userCredential.user!.uid);
     } on FirebaseAuthException catch (e) {
       _setErrorMessage(e.message);
     } catch (_) {
@@ -40,7 +59,13 @@ class AuthViewModel extends ChangeNotifier {
     _setLoadingState(true);
     try {
       _clearErrorMessage();
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Fetch user role from Firestore
+      await _fetchUserRole(userCredential.user!.uid);
     } on FirebaseAuthException catch (e) {
       _setErrorMessage(e.message);
     } catch (_) {
@@ -50,31 +75,18 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> signInWithGoogle() async {
-    _setLoadingState(true);
+  Future<void> _fetchUserRole(String uid) async {
     try {
-      _clearErrorMessage();
-
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        _setLoadingState(false);
-        return; // User canceled sign-in
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        _userRole = userDoc.data()?['role'];
+      } else {
+        _userRole = null;
       }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      await _auth.signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
-      _setErrorMessage(e.message);
     } catch (_) {
-      _setErrorMessage('An unexpected error occurred');
-    } finally {
-      _setLoadingState(false);
+      _userRole = null;
     }
+    notifyListeners();
   }
 
   Future<void> logOut() async {
@@ -82,6 +94,7 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _auth.signOut();
       await _googleSignIn.signOut();
+      _userRole = null;
       _clearErrorMessage();
     } catch (_) {
       _setErrorMessage('An unexpected error occurred during logout');

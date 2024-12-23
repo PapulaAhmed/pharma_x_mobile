@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               side: const BorderSide(color: Colors.black12),
                             ),
                             onPressed: () {
-                              authViewModel.signInWithGoogle();
+                              // authViewModel.signInWithGoogle();
                             },
                             icon: Image.asset(
                               'assets/images/google_logo.png',

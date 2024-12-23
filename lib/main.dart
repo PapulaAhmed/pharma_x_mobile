@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pharma_x/view/cart_screen.dart';
 import 'package:pharma_x/view/home_screen.dart';
 import 'package:pharma_x/view/login_screen.dart';
+import 'package:pharma_x/view/pharmacist_screen.dart';
 import 'package:pharma_x/view/sign_up_screen.dart';
 import 'package:pharma_x/viewmodel/auth_viewmodel.dart';
 import 'package:pharma_x/viewmodel/cart_viewmodel.dart';
@@ -58,10 +59,22 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
     final user = authViewModel.user;
+    final userRole = authViewModel.userRole;
 
-    // If user is logged in (non-null), show home screen, else show login screen
+    if (authViewModel.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     if (user != null) {
-      return Home();
+      if (userRole == "customer") {
+        return const Home(); // Customer home screen
+      } else if (userRole == "pharmacist") {
+        return const PharmacistHomeScreen(); // Pharmacist home screen
+      } else {
+        return const Scaffold(
+          body: Center(child: Text("Unknown user role")),
+        );
+      }
     } else {
       return const LoginScreen();
     }
