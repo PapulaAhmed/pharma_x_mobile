@@ -5,6 +5,7 @@ import 'package:pharma_x/view/login_screen.dart';
 import 'package:pharma_x/view/sign_up_screen.dart';
 import 'package:pharma_x/viewmodel/auth_viewmodel.dart';
 import 'package:pharma_x/viewmodel/cart_viewmodel.dart';
+import 'package:pharma_x/viewmodel/chat_viewmodel.dart';
 import 'package:pharma_x/viewmodel/medicine_viewmodel.dart';
 import 'package:pharma_x/viewmodel/orders_viewmodel.dart';
 import 'package:pharma_x/viewmodel/profile_viewmodel.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => MedicineViewModel()),
         ChangeNotifierProvider(create: (_) => OrdersViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatViewModel())
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

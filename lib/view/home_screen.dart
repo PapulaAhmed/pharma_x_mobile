@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:pharma_x/view/favourite_screen.dart';
+import 'package:pharma_x/view/customer_chat_screen.dart';
 import 'package:pharma_x/view/order_screen.dart';
 import 'package:pharma_x/view/profile_screen.dart';
 import 'package:pharma_x/widgets/custom_appbar.dart';
@@ -21,7 +21,7 @@ class _HomeState extends State<Home> {
 
   static final List<Widget> _pages = [
     HomeScreen(),
-    const FavouriteScreen(),
+    CustomerChatScreen(customerId: FirebaseAuth.instance.currentUser!.uid),
     const OrdersScreen(),
     const ProfileScreen(),
   ];
