@@ -1,51 +1,76 @@
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pharma_x/model/message_model.dart';
-import 'package:pharma_x/services/firebase_services.dart';
+import '../model/chat_model.dart';
+import 'package:flutter/material.dart';
 
 class ChatViewModel extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  String? _chatId;
-  List<Message> _messages = [];
+  List<Chat> _chats = [];
+  List<Chat> get chats => _chats;
 
-  List<Message> get messages => _messages;
-
-  Future<void> startChat(String customerId) async {
+  // Fetch all chats for a specific customer
+  Future<void> fetchChats(String customerId) async {
     try {
-      if (_chatId == null) {
-        _chatId = await _firebaseService.createChat(customerId);
-        print("Chat started with ID: $_chatId");
-        listenToMessages();
-      }
+      final querySnapshot = await _firestore
+          .collection('chats')
+          .where('customerId', isEqualTo: customerId)
+          .orderBy('lastUpdated', descending: true)
+          .get();
+
+      _chats = querySnapshot.docs.map((doc) {
+        return Chat.fromFirestore(doc.data(), doc.id);
+      }).toList();
+
+      notifyListeners();
     } catch (e) {
-      print("Error starting chat: $e");
+      print("Error fetching chats: $e");
     }
   }
 
-  void listenToMessages() {
-    if (_chatId != null) {
-      _firebaseService.getMessages(_chatId!).listen((messages) {
-        _messages = messages;
-        notifyListeners();
-      });
-    }
+  Stream<List<Message>> fetchMessages(String chatId) {
+    return _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              return Message.fromFirestore(doc.data(), doc.id);
+            }).toList());
   }
 
-  Future<void> sendMessage(String customerId, String message) async {
-    if (_chatId != null) {
-      try {
-        final newMessage = Message(
-          senderId: customerId,
-          message: message,
-          timestamp: DateTime.now(),
-        );
-        await _firebaseService.sendMessage(_chatId!, newMessage);
-        print("Message sent: $message");
-      } catch (e) {
-        print("Error sending message: $e");
-      }
-    } else {
-      print("Chat ID is null, cannot send message.");
-    }
+  // Start a new chat
+  Future<void> startNewChat(String customerId, String customerName) async {
+    final chatRef = _firestore.collection('chats').doc();
+    await chatRef.set({
+      'customerId': customerId,
+      'customerName': customerName,
+      'lastMessage': '',
+      'lastUpdated': FieldValue.serverTimestamp(),
+    });
+    notifyListeners();
+  }
+
+  Future<void> sendMessage(
+      String chatId, String senderId, String senderName, String message) async {
+    final messageRef =
+        _firestore.collection('chats').doc(chatId).collection('messages').doc();
+
+    // Add the message to the messages subcollection
+    await messageRef.set({
+      'senderId': senderId,
+      'senderName': senderName,
+      'message': message,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Update the lastMessage and lastUpdated fields in the chat document
+    await _firestore.collection('chats').doc(chatId).update({
+      'lastMessage': message,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    });
+
+    notifyListeners();
   }
 }

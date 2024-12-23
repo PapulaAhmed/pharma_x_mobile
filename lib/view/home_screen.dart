@@ -160,8 +160,8 @@ class _HomeState extends State<Home> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            label: 'Favorites',
+            icon: Icon(Icons.chat_outlined),
+            label: 'Chat',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment_outlined),
