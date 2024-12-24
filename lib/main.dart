@@ -9,6 +9,7 @@ import 'package:pharma_x/viewmodel/cart_viewmodel.dart';
 import 'package:pharma_x/viewmodel/chat_viewmodel.dart';
 import 'package:pharma_x/viewmodel/medicine_viewmodel.dart';
 import 'package:pharma_x/viewmodel/orders_viewmodel.dart';
+import 'package:pharma_x/viewmodel/pharmacist_screen_viewmodel.dart';
 import 'package:pharma_x/viewmodel/profile_viewmodel.dart';
 import 'package:pharma_x/viewmodel/signup_viewmodel.dart';
 import 'package:provider/provider.dart';
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => MedicineViewModel()),
         ChangeNotifierProvider(create: (_) => OrdersViewModel()),
-        ChangeNotifierProvider(create: (_) => ChatViewModel())
+        ChangeNotifierProvider(create: (_) => ChatViewModel()),
+        ChangeNotifierProvider(create: (_) => PharmacistHomeViewModel()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -69,7 +71,7 @@ class AuthWrapper extends StatelessWidget {
       if (userRole == "customer") {
         return const Home(); // Customer home screen
       } else if (userRole == "pharmacist") {
-        return const PharmacistHomeScreen(); // Pharmacist home screen
+        return PharmacistHomeScreen(); // Pharmacist home screen
       } else {
         return const Scaffold(
           body: Center(child: Text("Unknown user role")),

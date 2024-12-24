@@ -1,126 +1,100 @@
 import 'package:flutter/material.dart';
+import 'package:pharma_x/view/chat_details_screen.dart';
+import 'package:pharma_x/viewmodel/pharmacist_screen_viewmodel.dart';
+import 'package:pharma_x/widgets/custom_appbar.dart';
+import 'package:pharma_x/widgets/custom_drawer.dart';
+import 'package:provider/provider.dart';
 
-class PharmacistHomeScreen extends StatelessWidget {
+class PharmacistHomeScreen extends StatefulWidget {
   const PharmacistHomeScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Pharmacist Dashboard"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              // Add logout functionality
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Welcome, Pharmacist!",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "What would you like to do today?",
-              style: TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                children: [
-                  // Manage Chats
-                  _HomeOption(
-                    title: "Manage Chats",
-                    icon: Icons.chat,
-                    onTap: () {
-                      Navigator.pushNamed(context, '/manage-chats');
-                    },
-                  ),
-
-                  // View Orders
-                  _HomeOption(
-                    title: "View Orders",
-                    icon: Icons.assignment,
-                    onTap: () {
-                      Navigator.pushNamed(context, '/view-orders');
-                    },
-                  ),
-
-                  // Inventory Management
-                  _HomeOption(
-                    title: "Manage Inventory",
-                    icon: Icons.inventory,
-                    onTap: () {
-                      Navigator.pushNamed(context, '/inventory');
-                    },
-                  ),
-
-                  // Profile Settings
-                  _HomeOption(
-                    title: "Profile Settings",
-                    icon: Icons.settings,
-                    onTap: () {
-                      Navigator.pushNamed(context, '/profile-settings');
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  _PharmacistHomeScreenState createState() => _PharmacistHomeScreenState();
 }
 
-class _HomeOption extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final VoidCallback onTap;
+class _PharmacistHomeScreenState extends State<PharmacistHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
 
-  const _HomeOption({
-    Key? key,
-    required this.title,
-    required this.icon,
-    required this.onTap,
-  }) : super(key: key);
+    // Defer data fetching until after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel =
+          Provider.of<PharmacistHomeViewModel>(context, listen: false);
+      viewModel.fetchRecentChats();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        elevation: 4,
-        child: Center(
+    final viewModel = Provider.of<PharmacistHomeViewModel>(context);
+
+    return Scaffold(
+      drawer: CustomDrawer(),
+      appBar: CustomAppbar(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 48, color: Colors.blue),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
+              const Text(
+                "Recent Conversations",
+                style: TextStyle(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+              const SizedBox(height: 10),
+
+              // Recent Chats Section
+              Consumer<PharmacistHomeViewModel>(
+                builder: (context, viewModel, child) {
+                  if (viewModel.isLoadingChats) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (viewModel.recentChats.isEmpty) {
+                    return const Text("No recent conversations.");
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: viewModel.recentChats.length,
+                    itemBuilder: (context, index) {
+                      final chat = viewModel.recentChats[index];
+                      return Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.blueAccent,
+                            child:
+                                const Icon(Icons.person, color: Colors.white),
+                          ),
+                          title: Text(
+                              chat.customerId), // Replace with customer name
+                          subtitle: Text(chat.lastMessage.isNotEmpty
+                              ? chat.lastMessage
+                              : "No messages yet."),
+                          trailing: Text(
+                            chat.lastUpdated.toString(),
+                            style: const TextStyle(fontSize: 10),
+                          ),
+                          onTap: () {
+                            // Navigate to chat details
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatDetailScreen(
+                                  chatId: chat.chatId,
+                                  userRole: "pharmacist",
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),

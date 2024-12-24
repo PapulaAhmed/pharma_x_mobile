@@ -5,9 +5,8 @@ import 'package:pharma_x/view/customer_chat_screen.dart';
 import 'package:pharma_x/view/order_screen.dart';
 import 'package:pharma_x/view/profile_screen.dart';
 import 'package:pharma_x/widgets/custom_appbar.dart';
+import 'package:pharma_x/widgets/custom_drawer.dart';
 import 'package:pharma_x/widgets/medicine_display.dart';
-import 'package:provider/provider.dart';
-import 'package:pharma_x/viewmodel/auth_viewmodel.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -55,95 +54,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: Drawer(
-        child: SafeArea(
-          child: Consumer<AuthViewModel>(
-            builder: (context, authViewModel, child) {
-              return FutureBuilder<Map<String, String>>(
-                future: _getUserDetails(),
-                builder: (context, snapshot) {
-                  final userDetails = snapshot.data ??
-                      {'email': 'Loading...', 'name': 'Loading...'};
-
-                  return ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      DrawerHeader(
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const CircleAvatar(
-                              radius: 40,
-                              backgroundImage:
-                                  AssetImage('assets/images/11475206.jpg'),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              userDetails['name']!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                              ),
-                            ),
-                            Text(
-                              userDetails['email']!,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.home_outlined),
-                        title: const Text('Home'),
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.person_outline),
-                        title: const Text('My Account'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          // Navigate to My Account screen
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.shopping_bag_outlined),
-                        title: const Text('Orders'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const OrdersScreen()),
-                          );
-                        },
-                      ),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.logout),
-                        title: const Text('Logout'),
-                        onTap: () async {
-                          await authViewModel.logOut();
-                          Future.microtask(() {
-                            Navigator.pushReplacementNamed(context, '/login');
-                          });
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ),
+      drawer: CustomDrawer(),
       appBar: const CustomAppbar(),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(

@@ -59,8 +59,10 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                ChatDetailScreen(chatId: chat.chatId),
+                            builder: (context) => ChatDetailScreen(
+                              chatId: chat.chatId,
+                              userRole: "customer",
+                            ),
                           ),
                         ).then((_) {
                           // Refresh chats when returning from ChatDetailScreen

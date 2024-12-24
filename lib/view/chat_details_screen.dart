@@ -5,8 +5,11 @@ import '../viewmodel/chat_viewmodel.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String chatId;
+  final String userRole; // Either "customer" or "pharmacist"
 
-  const ChatDetailScreen({Key? key, required this.chatId}) : super(key: key);
+  const ChatDetailScreen(
+      {Key? key, required this.chatId, required this.userRole})
+      : super(key: key);
 
   @override
   _ChatDetailScreenState createState() => _ChatDetailScreenState();
@@ -43,8 +46,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   itemCount: _cachedMessages.length,
                   itemBuilder: (context, index) {
                     final message = _cachedMessages[index];
-                    final isMine = message.senderId ==
-                        "customerId"; // Adjust logic based on user ID
+
+                    // Determine alignment based on role
+                    final isMine = (widget.userRole == "customer" &&
+                            message.senderId == "customerId") ||
+                        (widget.userRole == "pharmacist" &&
+                            message.senderId == "pharmacistId");
 
                     return Align(
                       alignment:
@@ -93,10 +100,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             onPressed: () {
               final message = messageController.text.trim();
               if (message.isNotEmpty) {
+                final senderId = widget.userRole == "customer"
+                    ? "customerId"
+                    : "pharmacistId";
+                final senderName = widget.userRole == "customer"
+                    ? "Customer Name"
+                    : "Pharmacist Name";
+
                 chatViewModel.sendMessage(
                   chatId,
-                  "customerId", // Replace with the logged-in user's ID
-                  "Customer Name", // Replace with the logged-in user's name
+                  senderId, // Use the appropriate sender ID based on role
+                  senderName, // Use the appropriate sender name based on role
                   message,
                 );
 
@@ -105,8 +119,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   _cachedMessages.add(
                     Message(
                       messageId: DateTime.now().toIso8601String(),
-                      senderId: "customerId",
-                      senderName: "Customer Name",
+                      senderId: senderId,
+                      senderName: senderName,
                       message: message,
                       timestamp: DateTime.now(),
                     ),
