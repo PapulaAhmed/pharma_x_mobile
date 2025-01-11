@@ -1,5 +1,6 @@
 // lib/views/signup_view.dart
 import 'package:flutter/material.dart';
+import 'package:pharma_x/main.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -279,7 +280,13 @@ class _SignupViewState extends State<SignupView> {
 
                         if (mounted) {
                           if (success) {
-                            Navigator.pushReplacementNamed(context, '/home');
+                            // After successful signup, let AuthWrapper handle the navigation
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const AuthWrapper()),
+                              (route) => false,
+                            );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
