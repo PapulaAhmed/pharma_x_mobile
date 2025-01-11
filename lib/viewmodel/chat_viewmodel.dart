@@ -73,4 +73,12 @@ class ChatViewModel extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  void clearState() {
+    // Clear any cached messages, conversations, or streams
+    // Cancel any active listeners
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
 }

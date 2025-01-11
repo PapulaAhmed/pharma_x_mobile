@@ -2,18 +2,42 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 
 class ProfileViewModel extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final ImagePicker _picker = ImagePicker();
+
+  String get fullName =>
+      '${_userData?['firstName'] ?? ''} ${_userData?['lastName'] ?? ''}'.trim();
+  String get email => _auth.currentUser?.email ?? '';
+  String? get phoneNumber => _userData?['phoneNumber'];
+  List<Map<String, dynamic>> get addresses =>
+      List<Map<String, dynamic>>.from(_userData?['addresses'] ?? []);
 
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
-  String? _errorMessage;
+  String? _error;
 
   Map<String, dynamic>? get userData => _userData;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get error => _error;
+
+  ProfileViewModel() {
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final doc =
+        await _firestore.collection('users').doc(_auth.currentUser?.uid).get();
+    _userData = doc.data();
+    notifyListeners();
+  }
 
   Future<void> fetchUserProfile() async {
     // Set the loading state without triggering a widget rebuild
@@ -25,7 +49,7 @@ class ProfileViewModel extends ChangeNotifier {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null) {
-        _errorMessage = 'User not logged in';
+        _error = 'User not logged in';
         _isLoading = false;
         notifyListeners();
         return;
@@ -35,10 +59,10 @@ class ProfileViewModel extends ChangeNotifier {
       if (doc.exists) {
         _userData = doc.data();
       } else {
-        _errorMessage = 'User profile not found';
+        _error = 'User profile not found';
       }
     } catch (e) {
-      _errorMessage = 'Failed to fetch user profile: $e';
+      _error = 'Failed to fetch user profile: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -48,7 +72,7 @@ class ProfileViewModel extends ChangeNotifier {
   Future<void> addAddress(String title, String details) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) {
-      _errorMessage = 'User not logged in';
+      _error = 'User not logged in';
       return;
     }
 
@@ -66,7 +90,7 @@ class ProfileViewModel extends ChangeNotifier {
       _userData?['addresses'] = [...?_userData?['addresses'], newAddress];
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to add address: $e';
+      _error = 'Failed to add address: $e';
       notifyListeners();
     }
   }
@@ -74,7 +98,7 @@ class ProfileViewModel extends ChangeNotifier {
   Future<void> removeAddress(String addressId) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) {
-      _errorMessage = 'User not logged in';
+      _error = 'User not logged in';
       return;
     }
 
@@ -91,39 +115,145 @@ class ProfileViewModel extends ChangeNotifier {
           currentAddresses.where((addr) => addr['id'] != addressId).toList();
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to remove address: $e';
+      _error = 'Failed to remove address: $e';
       notifyListeners();
     }
   }
 
   // update user profile
-  Future<void> updateUserProfile({
+  Future<bool> updateUserProfile({
     required String firstName,
     required String lastName,
-    String? email,
+    required String phoneNumber,
   }) async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      _errorMessage = 'User not logged in';
-      return;
-    }
-
     try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        _error = 'User not logged in';
+        notifyListeners();
+        return false;
+      }
+
       await _firestore.collection('users').doc(userId).update({
-        "firstName": firstName,
-        "lastName": lastName,
-        if (email != null) "email": email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'phoneNumber': phoneNumber,
       });
 
       _userData?['firstName'] = firstName;
       _userData?['lastName'] = lastName;
-      if (email != null) {
-        _userData?['email'] = email;
-      }
+      _userData?['phoneNumber'] = phoneNumber;
       notifyListeners();
+      return true;
     } catch (e) {
-      _errorMessage = 'Failed to update user profile: $e';
+      _error = 'Failed to update profile: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> changePassword(String newPassword) async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        await user.updatePassword(newPassword);
+      }
+    } catch (e) {
+      _error = 'Failed to change password: $e';
       notifyListeners();
     }
+  }
+
+  Future<void> logout() async {
+    try {
+      await _auth.signOut();
+      _userData = null;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to logout: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateProfilePicture() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+
+      if (image == null) return;
+
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        _error = 'User not logged in';
+        notifyListeners();
+        return;
+      }
+
+      // Show loading state
+      _isLoading = true;
+      notifyListeners();
+
+      // Upload image to Firebase Storage
+      final storageRef = _storage.ref().child('profile_pictures/$userId.jpg');
+      await storageRef.putFile(File(image.path));
+
+      // Get the download URL
+      final imageUrl = await storageRef.getDownloadURL();
+
+      // Update user profile in Firestore
+      await _firestore.collection('users').doc(userId).update({
+        'profilePicture': imageUrl,
+      });
+
+      // Update local data
+      if (_userData != null) {
+        _userData!['profilePicture'] = imageUrl;
+      }
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Failed to update profile picture: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<bool> removeProfilePicture() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        _error = 'User not logged in';
+        notifyListeners();
+        return false;
+      }
+
+      final storageRef =
+          _storage.ref().child('profile_pictures/${user.uid}.jpg');
+      try {
+        await storageRef.delete();
+      } catch (e) {
+        // Ignore if file doesn't exist
+      }
+
+      await _firestore.collection('users').doc(user.uid).update({
+        'profilePicture': null,
+      });
+
+      return true;
+    } catch (e) {
+      _error = 'Failed to remove profile picture: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 }
