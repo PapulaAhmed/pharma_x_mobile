@@ -3,35 +3,60 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class UserModel {
-  final String uid;
+  final String id;
   final String firstName;
   final String lastName;
   final String email;
+  final String role;
+  final String? phoneNumber;
+  final String? profilePicture;
+  final List<Map<String, dynamic>> addresses;
 
   UserModel({
-    required this.uid,
+    required this.id,
     required this.firstName,
     required this.lastName,
     required this.email,
+    required this.role,
+    this.phoneNumber,
+    this.profilePicture,
+    this.addresses = const [],
   });
 
-  // Convert UserModel to a Map for Firestore
+  String get fullName => '$firstName $lastName'.trim();
+
+  factory UserModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return UserModel(
+      id: id,
+      firstName: data['firstName'] ?? 'Guest',
+      lastName: data['lastName'] ?? '',
+      email: data['email'] ?? 'No Email',
+      role: data['role'] ?? 'customer',
+      phoneNumber: data['phoneNumber'],
+      profilePicture: data['profilePicture'],
+      addresses: List<Map<String, dynamic>>.from(data['addresses'] ?? []),
+    );
+  }
+
+  factory UserModel.guest() {
+    return UserModel(
+      id: '',
+      firstName: 'Guest',
+      lastName: '',
+      email: 'Guest',
+      role: 'guest',
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
+      'phoneNumber': phoneNumber,
+      'profilePicture': profilePicture,
+      'addresses': addresses,
     };
-  }
-
-  // Create UserModel from a Map (useful for retrieving from Firestore)
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
-      uid: json['uid'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
-      email: json['email'] ?? '',
-    );
   }
 }
 
@@ -52,10 +77,11 @@ class UserRepository {
 
       // Create user model
       UserModel userModel = UserModel(
-        uid: userCredential.user!.uid,
+        id: userCredential.user!.uid,
         firstName: firstName,
         lastName: lastName,
         email: email,
+        role: 'customer',
       );
 
       // Store user in Firestore using UID as document ID

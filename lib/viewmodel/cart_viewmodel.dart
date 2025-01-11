@@ -16,13 +16,16 @@ class CartViewModel extends ChangeNotifier {
 
   List<OrderModel> get orders => _orders;
 
-  void addItem(String id, String name, double price, int quantity) {
+  void addItem(String id, String name, double price, int quantity,
+      {String? scientificName, String? imageUrl}) {
     if (_items.containsKey(id)) {
       _items.update(
         id,
         (existingItem) => CartItem(
           id: existingItem.id,
           name: existingItem.name,
+          scientificName: scientificName ?? existingItem.scientificName,
+          imageUrl: imageUrl ?? existingItem.imageUrl,
           price: existingItem.price,
           quantity: existingItem.quantity + quantity,
         ),
@@ -31,6 +34,8 @@ class CartViewModel extends ChangeNotifier {
       _items[id] = CartItem(
         id: id,
         name: name,
+        scientificName: scientificName,
+        imageUrl: imageUrl,
         price: price,
         quantity: quantity,
       );
@@ -52,31 +57,60 @@ class CartViewModel extends ChangeNotifier {
     required String address,
     required String paymentMethod,
   }) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-
-    if (userId == null) {
-      throw Exception('User not logged in'); // Handle null user case
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('User not logged in');
     }
 
     if (_items.isEmpty) return;
 
-    final newOrder = OrderModel(
-      id: DateTime.now().toIso8601String(),
-      userId: userId, // Assign the order to the logged-in user
-      date: DateTime.now(),
-      status: 'Pending',
-      address: address,
-      paymentMethod: paymentMethod,
-      items: _items.values.toList(),
-    );
+    // Fetch user data from Firestore
+    final userData = await _firestore.collection('users').doc(user.uid).get();
+    if (!userData.exists) {
+      throw Exception('User profile not found');
+    }
+
+    final fullName = '${userData['firstName']} ${userData['lastName']}'.trim();
+    final phoneNumber = userData['phoneNumber'] ?? 'No Phone';
+    final email = user.email ?? 'No Email';
 
     try {
-      await _firestore.collection('orders').add(newOrder.toFirestore());
-      _orders.add(newOrder);
+      // Create order
+      final orderRef = await _firestore.collection('orders').add({
+        'userId': user.uid,
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
+        'email': email,
+        'date': DateTime.now().toIso8601String(),
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'Pending',
+        'address': address,
+        'paymentMethod': paymentMethod,
+        'items': _items.values.map((item) => item.toFirestore()).toList(),
+      });
+
+      // Create notification for pharmacists
+      await _firestore.collection('notifications').add({
+        'title': 'New Order Received',
+        'body': 'New order from $fullName',
+        'type': 'order',
+        'orderId': orderRef.id,
+        'targetRole': 'pharmacist',
+        'timestamp': FieldValue.serverTimestamp(),
+        'read': false,
+        'data': {
+          'orderId': orderRef.id,
+          'customerName': fullName,
+          'status': 'pending'
+        }
+      });
+
+      // Clear cart after successful order
       clearCart();
       notifyListeners();
     } catch (e) {
-      throw Exception('Failed to create order: $e');
+      print('Error creating order: $e');
+      rethrow;
     }
   }
 }

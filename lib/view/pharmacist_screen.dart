@@ -5,14 +5,14 @@ import 'package:pharma_x/widgets/custom_appbar.dart';
 import 'package:pharma_x/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 
-class PharmacistHomeScreen extends StatefulWidget {
-  const PharmacistHomeScreen({Key? key}) : super(key: key);
+class PharmacistHomeScreen2 extends StatefulWidget {
+  const PharmacistHomeScreen2({Key? key}) : super(key: key);
 
   @override
   _PharmacistHomeScreenState createState() => _PharmacistHomeScreenState();
 }
 
-class _PharmacistHomeScreenState extends State<PharmacistHomeScreen> {
+class _PharmacistHomeScreenState extends State<PharmacistHomeScreen2> {
   @override
   void initState() {
     super.initState();
