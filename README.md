@@ -1,6 +1,7 @@
 # Pharma X Mobile Application
 
 ## Overview
+
 Pharma X is a mobile application built using Flutter and Firebase, designed to provide a seamless pharmacy experience for users. The app allows users to order over-the-counter (OTC) medicine, track their orders, and chat directly with pharmacists for consultation.
 
 ---
@@ -17,6 +18,7 @@ Pharma X is a mobile application built using Flutter and Firebase, designed to p
 ## Actors
 
 1. **Users**:
+
    - Place orders.
    - Track orders.
    - Consult with pharmacists.
@@ -29,6 +31,7 @@ Pharma X is a mobile application built using Flutter and Firebase, designed to p
 ---
 
 ## Project Structure
+
 The project includes the following screens and functionalities:
 
 - **Profile Screen**: Manages user information and settings.
@@ -41,16 +44,22 @@ The project includes the following screens and functionalities:
 
 ---
 
+## Presentation Video Link
+
+https://youtu.be/P_jityAG--Q?si=I7zniAX0HUfa6uel
+
+---
+
 ## Placeholder Accounts
 
 Use the following placeholders during development for account login:
 
-| Email                 | Password        | Role         |
-|-----------------------|-----------------|--------------|
-| papula@pharmax.com    | papula12345     | Pharmacist   |
-| sahand@pharmax.com    | sahand12345     | Customer     |
-| elaf@pharmax.com      | elaf12345       | Customer     |
-| meer@pharmax.com      | meer12345       | Customer     |
+| Email              | Password    | Role       |
+| ------------------ | ----------- | ---------- |
+| papula@pharmax.com | papula12345 | Pharmacist |
+| sahand@pharmax.com | sahand12345 | Customer   |
+| elaf@pharmax.com   | elaf12345   | Customer   |
+| meer@pharmax.com   | meer12345   | Customer   |
 
 ---
 
